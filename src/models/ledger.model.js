@@ -1,6 +1,5 @@
 const mongoose = require("mongoose")
 
-
 const ledgerSchema = new mongoose.Schema({
     account: {
         type: mongoose.Schema.Types.ObjectId,
@@ -26,14 +25,30 @@ const ledgerSchema = new mongoose.Schema({
         required: [true, "Type is required"],
         immutable: true
     }
-
-
 })
+
 function preventLedgerModification() {
     throw new Error("Ledger can not be modified")
 }
-ledgerSchema.pre(["save", "updateOne", "findOneAndUpdate", "deleteMany", "deleteOne", "updateMany", "findByIdAndDelete", "findByIdAndUpdate", "findOneAndDelete", "findOneAndReplace"], preventLedgerModification);
 
+ledgerSchema.pre("save", function () {
+    if (!this.isNew) {
+        throw new Error("Ledger can not be modified")
+    }
+})
 
-const ledgerModel = mongoose.model("ledger", ledgerSchema);
-module.exports = ledgerModel;
+ledgerSchema.pre([
+    "updateOne",
+    "findOneAndUpdate",
+    "deleteMany",
+    "deleteOne",
+    "updateMany",
+    "findByIdAndDelete",
+    "findByIdAndUpdate",
+    "findOneAndDelete",
+    "findOneAndReplace"
+], preventLedgerModification)
+
+const ledgerModel = mongoose.model("ledger", ledgerSchema)
+
+module.exports = ledgerModel

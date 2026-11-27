@@ -1,6 +1,5 @@
 require('dotenv').config();
 const nodemailer = require('nodemailer');
-const { name } = require('nodemailer/lib/package-info.js');
 
 const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -26,11 +25,11 @@ transporter.verify((error, success) => {
 const sendEmail = async (to, subject, text, html) => {
     try {
         const info = await transporter.sendMail({
-            from: `"Backend Ledger" <${process.env.EMAIL_USER}>`, // sender address
-            to, // list of receivers
-            subject, // Subject line
-            text, // plain text body
-            html, // html body
+            from: `"Backend Ledger" <${process.env.EMAIL_USER}>`,
+            to,
+            subject,
+            text,
+            html,
         });
 
         console.log('Message sent: %s', info.messageId);
@@ -39,6 +38,7 @@ const sendEmail = async (to, subject, text, html) => {
         console.error('Error sending email:', error);
     }
 };
+
 async function sendRegistrationEmail(name, email) {
     const subject = "Registration Confirmation";
     const text = `Dear ${name},\n\nThank you for registering with us.\n\nRegards,\nBackend Ledger`;
@@ -54,4 +54,49 @@ async function sendRegistrationEmail(name, email) {
     await sendEmail(email, subject, text, html);
 }
 
-module.exports = { sendEmail, sendRegistrationEmail }
+async function sendTransactionEmail(name, email, amount, type, balance) {
+    const subject = "Transaction Success";
+    const text = `Dear ${name},\n\nYour transaction was successful.\n\nRegards,\nBackend Ledger`;
+    const html = `
+    <div style="font-family: Arial, sans-serif;">
+      <h2>Transaction Success</h2>
+      <p>Dear ${name},</p>
+      <p>Your transaction was successful.</p>
+      <p>Regards,<br>Backend Ledger</p>
+    </div>
+  `;
+
+    await sendEmail(email, subject, text, html);
+}
+
+async function sendTransactionFailedEmail(name, email) {
+    const subject = "Transaction Failed";
+    const text = `Dear ${name},\n\nYour transaction failed.\n\nRegards,\nBackend Ledger`;
+    const html = `
+    <div style="font-family: Arial, sans-serif;">
+      <h2>Transaction Failed</h2>
+      <p>Dear ${name},</p>
+      <p>Your transaction failed.</p>
+      <p>Regards,<br>Backend Ledger</p>
+    </div>
+  `;
+
+    await sendEmail(email, subject, text, html);
+}
+
+async function sendTransactionNotification(fromEmail, toEmail, amount, type) {
+    if (fromEmail) {
+        await sendTransactionEmail("Customer", fromEmail, amount, type);
+    }
+    if (toEmail) {
+        await sendTransactionEmail("Customer", toEmail, amount, type);
+    }
+}
+
+module.exports = {
+    sendEmail,
+    sendRegistrationEmail,
+    sendTransactionEmail,
+    sendTransactionFailedEmail,
+    sendTransactionNotification
+};
